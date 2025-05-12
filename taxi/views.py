@@ -3,8 +3,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views import generic
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.decorators.http import require_POST
+from django.views.generic import CreateView
 
+from .forms import DriverCreationForm
 from .models import Driver, Car, Manufacturer
 
 
@@ -90,8 +91,9 @@ class DriverDetailView(LoginRequiredMixin, generic.DetailView):
     queryset = Driver.objects.all().prefetch_related("cars__manufacturer")
 
 
-class DriverCreateView(LoginRequiredMixin, generic.CreateView):
+class DriverCreateView(CreateView):
     model = Driver
+    form_class = DriverCreationForm
     template_name = "taxi/driver_form.html"
     success_url = reverse_lazy("taxi:driver-list")
 
@@ -102,15 +104,13 @@ class DriverDeleteView(LoginRequiredMixin, generic.DeleteView):
 
 
 @login_required
-@require_POST
-def assign_driver_to_car(request, pk):
+def assign_driver(request, pk):
     car = get_object_or_404(Car, pk=pk)
     car.drivers.add(request.user)
     return redirect("taxi:car-detail", pk=pk)
 
 @login_required
-@require_POST
-def remove_driver_from_car(request, pk):
+def remove_driver(request, pk):
     car = get_object_or_404(Car, pk=pk)
     car.drivers.remove(request.user)
     return redirect("taxi:car-detail", pk=pk)
